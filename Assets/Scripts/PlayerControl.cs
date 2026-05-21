@@ -1,20 +1,16 @@
+using NUnit.Framework;
 using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerControl : NetworkBehaviour
 {
-    [SerializeField]
-    private float walkSpeed = 3.5f;
+    [SerializeField] private float walkSpeed = 3.5f;
+    [SerializeField] private Vector2 defaultPositionRange = new Vector2(-4f, 4f);
 
-    [SerializeField]
-    private Vector2 defaultPositionRange = new Vector2(-4, 4);
-
-    [SerializeField]
-    private NetworkVariable<float> forwardBackPosition = new NetworkVariable<float>();
-
-    [SerializeField]
-    private NetworkVariable<float> leftRightPosition = new NetworkVariable<float>();
+    // variables del servidor
+    [SerializeField] private NetworkVariable<float> forwardBackPosition = new NetworkVariable<float>();
+    [SerializeField] private NetworkVariable<float> leftRightPosition = new NetworkVariable<float>();
 
     // client caching
     private float oldForwardBackPosition;
@@ -22,7 +18,11 @@ public class PlayerControl : NetworkBehaviour
 
     void Start()
     {
-        transform.position = new Vector3(Random.Range(defaultPositionRange.x, defaultPositionRange.y), 0, Random.Range(defaultPositionRange.x, defaultPositionRange.y));
+        transform.position = new Vector3(
+            Random.Range(defaultPositionRange.x, defaultPositionRange.y),
+            0f,
+            Random.Range(defaultPositionRange.x, defaultPositionRange.y)
+        );
     }
 
     void Update()
@@ -31,23 +31,21 @@ public class PlayerControl : NetworkBehaviour
         {
             UpdateServer();
         }
-        else if (IsClient)
+        if (IsClient && IsOwner)
         {
             UpdateClient();
         }
     }
 
-    void UpdateServer()
+    private void UpdateServer()
     {
-        transform.position = new Vector3(transform.position.x + leftRightPosition.Value,
-                                        transform.position.y,
-                                        transform.position.z + forwardBackPosition.Value);
+        transform.position = new Vector3(transform.position.x + leftRightPosition.Value, transform.position.y, transform.position.z + forwardBackPosition.Value);
     }
 
-    void UpdateClient()
+    private void UpdateClient()
     {
-        float forwardBackward = 0;
-        float leftRight = 0;
+        float forwardBackward = 0f;
+        float leftRight = 0f;
 
         if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
         {
@@ -70,18 +68,15 @@ public class PlayerControl : NetworkBehaviour
         {
             oldForwardBackPosition = forwardBackward;
             oldLeftRightPosition = leftRight;
-            // Update the server
-            UpdateClientPositionServerRpc(forwardBackward, leftRight);
+            // Update the server variables
+            UpdateServerRpc(forwardBackward, leftRight);
         }
-
     }
 
     [ServerRpc]
-    public void UpdateClientPositionServerRpc(float forwardBackward, float leftRight)
+    private void UpdateServerRpc(float forwardBackward, float leftRight)
     {
         forwardBackPosition.Value = forwardBackward;
         leftRightPosition.Value = leftRight;
     }
-
-
 }
