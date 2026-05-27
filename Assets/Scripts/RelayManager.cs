@@ -9,12 +9,14 @@ using Unity.Services.Core;
 using Unity.Services.Authentication;
 using Unity.Services.Multiplayer;
 using Unity.Netcode;
+using TMPro;
 
 public class RelayManager : Singleton<RelayManager>
 {
     [SerializeField] private string environment = "production";
     [SerializeField] private int maxConnections = 10;
     private bool serveisInicialitzats = false;
+    public TextMeshProUGUI joinCodeTextMeshPro;
 
     async void Start()
     {
@@ -50,6 +52,7 @@ public class RelayManager : Singleton<RelayManager>
         var session = await MultiplayerService.Instance.CreateSessionAsync(options);
         string joinCode = session.Code;
         Debug.Log($"Codigo para compartir:{joinCode}");
+        joinCodeTextMeshPro.text = "Code: " + joinCode;
 
         if (NetworkManager.Singleton.StartHost())
         {
