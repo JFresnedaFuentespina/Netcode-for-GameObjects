@@ -19,12 +19,13 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     public TextMeshProUGUI playersInGameText;
 
+    [SerializeField]
+    public TMP_InputField joinCodeInputField;
+
     private bool hasServerStarted = false;
 
     void Awake()
     {
-        // Cursor.visible = true;
-        // Cursor.lockState = CursorLockMode.Confined;
     }
 
     void Start()
@@ -40,16 +41,9 @@ public class UIManager : MonoBehaviour
         };
     }
 
-    void StartHost()
+    async void StartHost()
     {
-        if (NetworkManager.Singleton.StartHost())
-        {
-            Debug.Log("Host started successfully.");
-        }
-        else
-        {
-            Debug.LogError("Failed to start host.");
-        }
+        RelayManager.Instance.StartHostWithMultiplayerSuite();
     }
     void StartServer()
     {
@@ -63,15 +57,11 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    void StartClient()
+    async void StartClient()
     {
-        if (NetworkManager.Singleton.StartClient())
+        if (!string.IsNullOrEmpty(joinCodeInputField.text))
         {
-            Debug.Log("Client started successfully.");
-        }
-        else
-        {
-            Debug.LogError("Failed to start client.");
+            RelayManager.Instance.StartClientWithMultiplayerSuite(joinCodeInputField.text);
         }
     }
 
