@@ -52,7 +52,6 @@ public class RelayManager : Singleton<RelayManager>
         var session = await MultiplayerService.Instance.CreateSessionAsync(options);
         string joinCode = session.Code;
         Debug.Log($"Codigo para compartir:{joinCode}");
-        joinCodeTextMeshPro.text = "Code: " + joinCode;
 
         if (NetworkManager.Singleton.StartHost())
         {
@@ -72,6 +71,7 @@ public class RelayManager : Singleton<RelayManager>
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxConnections);
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
             Debug.Log($"Código para compartir: {joinCode}");
+            joinCodeTextMeshPro.text = "Code: " + joinCode;
             UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
 
             RelayServerData relayServerData = new RelayServerData(
