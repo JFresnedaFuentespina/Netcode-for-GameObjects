@@ -10,10 +10,17 @@ public class SpawnerControl : NetworkSingleton<SpawnerControl>
 
     void Awake()
     {
-        NetworkManager.Singleton.OnServerStarted += () =>
+    }
+
+    void Start()
+    {
+        if (NetworkManager.Singleton != null)
         {
-            NetworkObjectPool.Instance.InitializePool();
-        };
+            NetworkManager.Singleton.OnServerStarted += () =>
+            {
+                NetworkObjectPool.Instance.InitializePool();
+            };
+        }
     }
 
     public void SpawnObjects()

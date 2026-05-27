@@ -24,10 +24,6 @@ public class UIManager : MonoBehaviour
 
     private bool hasServerStarted = false;
 
-    void Awake()
-    {
-    }
-
     void Start()
     {
         startHostButton.onClick.AddListener(StartHost);
@@ -43,7 +39,7 @@ public class UIManager : MonoBehaviour
 
     async void StartHost()
     {
-        RelayManager.Instance.StartHostWithMultiplayerSuite();
+        RelayManager.Instance.StartHostWithMultiplayerSuite2();
     }
     void StartServer()
     {
@@ -61,7 +57,7 @@ public class UIManager : MonoBehaviour
     {
         if (!string.IsNullOrEmpty(joinCodeInputField.text))
         {
-            RelayManager.Instance.StartClientWithMultiplayerSuite(joinCodeInputField.text);
+            RelayManager.Instance.StartClientWithMultiplayerSuite2(joinCodeInputField.text);
         }
     }
 
