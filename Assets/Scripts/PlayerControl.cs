@@ -13,6 +13,8 @@ public class PlayerControl : NetworkBehaviour
         Jumping
     }
 
+    private PlayerState lastState = PlayerState.Idle;
+
     [SerializeField] private float speed = 3.5f;
     [SerializeField] private float rotationSpeed = 1.5f;
     [SerializeField] private Vector2 defaultInitialPlanePosition = new Vector2(-4f, 4f);
@@ -28,10 +30,12 @@ public class PlayerControl : NetworkBehaviour
     public CharacterController characterController;
     public Animator animator;
 
+    private const float INPUT_THRESHOLD = 0.01f;
+
     void Awake()
     {
-        // characterController = GetComponent<CharacterController>();
-        // animator = GetComponent<Animator>();
+        characterController = GetComponent<CharacterController>();
+        animator = GetComponent<Animator>();
     }
 
     void Start()
@@ -58,46 +62,47 @@ public class PlayerControl : NetworkBehaviour
 
     private void ClientInput()
     {
-        // Player position & rotation changes
-        Vector3 inputRotation = new Vector3(0, Input.GetAxis("Horizontal"), 0);
+        Vector3 inputRotation = new Vector3(
+            0,
+            Input.GetAxisRaw("Horizontal"),
+            0
+        );
 
         Vector3 direction = transform.TransformDirection(Vector3.forward);
-        float forwardInput = Input.GetAxis("Vertical");
+
+        float forwardInput = Input.GetAxisRaw("Vertical");
+
         Vector3 inputPosition = direction * forwardInput;
 
-        if (oldInputPosition != inputPosition || oldInputRotation != inputRotation)
+        bool positionChanged =
+            Vector3.Distance(oldInputPosition, inputPosition) >
+            INPUT_THRESHOLD;
+
+        bool rotationChanged =
+            Vector3.Distance(oldInputRotation, inputRotation) >
+            INPUT_THRESHOLD;
+
+        if (positionChanged || rotationChanged)
         {
             oldInputPosition = inputPosition;
             oldInputRotation = inputRotation;
-            UpdateClientPositionAndRotationServerRpc(inputPosition * speed, inputRotation * rotationSpeed);
-        }
 
-        // Player state changes
-        if (forwardInput > 0)
-        {
-            UpdatePlayerStateServerRpc(PlayerState.Walk);
+            UpdateClientPositionAndRotationServerRpc(
+                inputPosition * speed,
+                inputRotation * rotationSpeed
+            );
         }
-        else if (forwardInput < 0)
-        {
-            UpdatePlayerStateServerRpc(PlayerState.ReverseWalk);
-        }
-        else
-        {
-            UpdatePlayerStateServerRpc(PlayerState.Idle);
-        }
-    }
-
-    private void UpdateClient()
-    {
-
     }
 
     private void ClientMoveAndRotate()
     {
+        if (characterController == null) return;
+
         if (networkPositionDirection.Value != Vector3.zero)
         {
             characterController.SimpleMove(networkPositionDirection.Value);
         }
+
         if (networkRotationDirection.Value != Vector3.zero)
         {
             transform.Rotate(networkRotationDirection.Value);
@@ -106,11 +111,13 @@ public class PlayerControl : NetworkBehaviour
 
     private void ClientVisuals()
     {
-        if(networkPlayerState.Value == PlayerState.Walk)
+        if (animator == null) return;
+
+        if (networkPlayerState.Value == PlayerState.Walk)
         {
             animator.SetFloat("Walk", 1f);
         }
-        else if(networkPlayerState.Value == PlayerState.ReverseWalk)
+        else if (networkPlayerState.Value == PlayerState.ReverseWalk)
         {
             animator.SetFloat("Walk", -1f);
         }

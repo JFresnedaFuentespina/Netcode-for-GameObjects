@@ -5,32 +5,38 @@ using UnityEngine;
 
 public class PlayerHud : NetworkBehaviour
 {
-    private NetworkVariable<NetworkString> playerName = new NetworkVariable<NetworkString>();
+    private NetworkVariable<FixedString64Bytes> playerName =
+        new NetworkVariable<FixedString64Bytes>();
 
     private bool overlaySet = false;
+
     public override void OnNetworkSpawn()
     {
+        base.OnNetworkSpawn();
+
         if (IsServer)
         {
-            playerName.Value = "Player " + OwnerClientId;
+            playerName.Value = $"Player {OwnerClientId}";
         }
     }
 
-    public void SetOverlay()
+    private void SetOverlay()
     {
-        var localPlayerOverlay = gameObject.GetComponentInChildren<TextMeshProUGUI>();
-        localPlayerOverlay.text = playerName.Value;
-        overlaySet = true;
+        var localPlayerOverlay =
+            GetComponentInChildren<TextMeshProUGUI>();
+
+        if (localPlayerOverlay != null)
+        {
+            localPlayerOverlay.text = playerName.Value.ToString();
+            overlaySet = true;
+        }
     }
 
-    void Update()
+    private void Update()
     {
-        if (!overlaySet && !string.IsNullOrEmpty(playerName.Value))
+        if (!overlaySet && !playerName.Value.IsEmpty)
         {
             SetOverlay();
         }
     }
 }
-
-
-

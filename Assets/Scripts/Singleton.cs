@@ -2,36 +2,38 @@ namespace DilmerGames.Core.Singletons
 {
     using UnityEngine;
 
-    /// <summary>
-    /// Base class for a singleton MonoBehaviour.
-    /// </summary>
-    /// <typeparam name="T">The type of the singleton.</typeparam>
     public class Singleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         private static T _instance;
+
         public static T Instance
         {
             get
             {
-                if(_instance == null)
+                if (_instance == null)
                 {
-                    var objs = FindObjectsByType<T>(FindObjectsSortMode.None);
-                    if(objs.Length > 0)
+                    _instance = FindFirstObjectByType<T>();
+
+                    if (_instance == null)
                     {
-                        _instance = objs[0];
-                    }   
-                    if(objs.Length > 1)
-                    {
-                        Debug.LogWarning("Multiple instances of singleton " + typeof(T).Name + " found. Using the first one.");
-                    }
-                    if(_instance == null)
-                    {
-                        GameObject obj = new GameObject();
-                        obj.name = string.Format("_{0}", typeof(T).Name);
-                        _instance = obj.AddComponent<T>();
+                        Debug.LogError(
+                            $"Singleton {typeof(T).Name} not found in scene.");
                     }
                 }
+
                 return _instance;
+            }
+        }
+
+        protected virtual void Awake()
+        {
+            if (_instance == null)
+            {
+                _instance = this as T;
+            }
+            else if (_instance != this)
+            {
+                Destroy(gameObject);
             }
         }
     }

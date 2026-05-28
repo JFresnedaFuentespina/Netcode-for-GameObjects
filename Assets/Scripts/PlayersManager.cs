@@ -4,30 +4,61 @@ using UnityEngine;
 
 public class PlayersManager : NetworkSingleton<PlayersManager>
 {
-    private NetworkVariable<int> playerInGame = new NetworkVariable<int>();
+    private NetworkVariable<int> playersInGame = new NetworkVariable<int>(0);
 
     public int PlayersInGame()
     {
-        return playerInGame.Value;
+        return playersInGame.Value;
     }
 
-    void Start()
+    public override void OnNetworkSpawn()
     {
-        NetworkManager.Singleton.OnClientConnectedCallback += (id) =>
+        base.OnNetworkSpawn();
+
+        if (NetworkManager.Singleton == null)
         {
-            if(NetworkManager.Singleton.IsServer)
-            {
-                Debug.Log("Client connected: " + id);
-                playerInGame.Value++;
-            }
-        };
-        NetworkManager.Singleton.OnClientDisconnectCallback += (id) =>
+            Debug.LogError("NetworkManager is null.");
+            return;
+        }
+
+        if (IsServer)
         {
-            if(NetworkManager.Singleton.IsServer)
-            {
-                Debug.Log("Client disconnected: " + id);
-                playerInGame.Value--;
-            }
-        };
+            Debug.Log("PlayersManager spawned on server.");
+
+            NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+
+            // Cuenta el host al iniciar
+            playersInGame.Value = NetworkManager.Singleton.ConnectedClientsList.Count;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+
+        if (NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
+        }
+    }
+
+    private void OnClientConnected(ulong clientId)
+    {
+        Debug.Log($"Client connected: {clientId}");
+
+        playersInGame.Value = NetworkManager.Singleton.ConnectedClientsList.Count;
+
+        Debug.Log($"Players in game: {playersInGame.Value}");
+    }
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        Debug.Log($"Client disconnected: {clientId}");
+
+        playersInGame.Value = NetworkManager.Singleton.ConnectedClientsList.Count;
+
+        Debug.Log($"Players in game: {playersInGame.Value}");
     }
 }

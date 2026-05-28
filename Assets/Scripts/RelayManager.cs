@@ -7,7 +7,6 @@ using Unity.Services.Relay.Models;
 using UnityEngine;
 using Unity.Services.Core;
 using Unity.Services.Authentication;
-using Unity.Services.Multiplayer;
 using Unity.Netcode;
 using TMPro;
 
@@ -40,29 +39,6 @@ public class RelayManager : Singleton<RelayManager>
         }
     }
 
-    public async void StartHostWithMultiplayerSuite()
-    {
-        if (!serveisInicialitzats) return;
-
-        var options = new SessionOptions
-        {
-            MaxPlayers = maxConnections
-        };
-
-        var session = await MultiplayerService.Instance.CreateSessionAsync(options);
-        string joinCode = session.Code;
-        Debug.Log($"Codigo para compartir:{joinCode}");
-
-        if (NetworkManager.Singleton.StartHost())
-        {
-            Debug.Log("Host started successfully.");
-        }
-        else
-        {
-            Debug.LogError("Failed to start host.");
-        }
-    }
-
     public async void StartHostWithMultiplayerSuite2()
     {
         if (!serveisInicialitzats) return;
@@ -71,7 +47,16 @@ public class RelayManager : Singleton<RelayManager>
             Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxConnections);
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
             Debug.Log($"Código para compartir: {joinCode}");
-            joinCodeTextMeshPro.text = "Code: " + joinCode;
+            
+            if (joinCodeTextMeshPro != null)
+            {
+                joinCodeTextMeshPro.text = "Code: " + joinCode;
+            }
+            else
+            {
+                Debug.LogWarning("joinCodeTextMeshPro no asignado");
+            }
+
             UnityTransport transport = NetworkManager.Singleton.GetComponent<UnityTransport>();
 
             RelayServerData relayServerData = new RelayServerData(
@@ -100,22 +85,6 @@ public class RelayManager : Singleton<RelayManager>
             Debug.LogError(e);
         }
     }
-
-    public async void StartClientWithMultiplayerSuite(string joinCode)
-    {
-        if (!serveisInicialitzats) return;
-
-        var session = await MultiplayerService.Instance.JoinSessionByCodeAsync(joinCode);
-        if (NetworkManager.Singleton.StartClient())
-        {
-            Debug.Log("Client started successfully.");
-        }
-        else
-        {
-            Debug.LogError("Failed to start client.");
-        }
-    }
-
     public async void StartClientWithMultiplayerSuite2(string joinCode)
     {
         if (!serveisInicialitzats) return;

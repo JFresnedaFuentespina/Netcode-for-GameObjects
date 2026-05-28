@@ -74,6 +74,11 @@ public class UIManager : MonoBehaviour
 
     void Update()
     {
-        playersInGameText.text = "Players in Game: " + PlayersManager.Instance.PlayersInGame();
+        if (PlayersManager.Instance != null)
+        {
+            playersInGameText.text =
+                "Players in Game: " +
+                PlayersManager.Instance.PlayersInGame();
+        }
     }
 }
