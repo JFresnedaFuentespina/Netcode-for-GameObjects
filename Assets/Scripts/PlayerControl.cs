@@ -1,6 +1,4 @@
-using NUnit.Framework;
 using Unity.Netcode;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class PlayerControl : NetworkBehaviour
@@ -31,6 +29,8 @@ public class PlayerControl : NetworkBehaviour
     public Animator animator;
 
     private const float INPUT_THRESHOLD = 0.01f;
+    private float sendRate = 0.05f;
+    private float sendTimer;
 
     void Awake()
     {
@@ -52,16 +52,28 @@ public class PlayerControl : NetworkBehaviour
 
     void Update()
     {
-        if (IsClient && IsOwner)
+        if (characterController == null || animator == null)
+            return;
+
+        if (IsOwner)
         {
             ClientInput();
         }
+
         ClientMoveAndRotate();
+
         ClientVisuals();
     }
 
     private void ClientInput()
     {
+        sendTimer += Time.deltaTime;
+
+        if (sendTimer < sendRate)
+            return;
+
+        sendTimer = 0f;
+
         Vector3 inputRotation = new Vector3(
             0,
             Input.GetAxisRaw("Horizontal"),
@@ -92,21 +104,41 @@ public class PlayerControl : NetworkBehaviour
                 inputRotation * rotationSpeed
             );
         }
+
+        PlayerState newState;
+
+        if (forwardInput > 0)
+        {
+            newState = PlayerState.Walk;
+        }
+        else if (forwardInput < 0)
+        {
+            newState = PlayerState.ReverseWalk;
+        }
+        else
+        {
+            newState = PlayerState.Idle;
+        }
+
+        if (newState != lastState)
+        {
+            lastState = newState;
+            UpdatePlayerStateServerRpc(newState);
+        }
     }
 
     private void ClientMoveAndRotate()
     {
-        if (characterController == null) return;
+        if (characterController == null)
+            return;
 
-        if (networkPositionDirection.Value != Vector3.zero)
-        {
-            characterController.SimpleMove(networkPositionDirection.Value);
-        }
+        characterController.SimpleMove(
+            networkPositionDirection.Value
+        );
 
-        if (networkRotationDirection.Value != Vector3.zero)
-        {
-            transform.Rotate(networkRotationDirection.Value);
-        }
+        transform.Rotate(
+            networkRotationDirection.Value
+        );
     }
 
     private void ClientVisuals()
